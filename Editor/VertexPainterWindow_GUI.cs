@@ -456,7 +456,11 @@ namespace JBooth.VertexPainterPro
          if (brushMode == BrushTarget.Color || brushMode == BrushTarget.UV0_AsColor || brushMode == BrushTarget.UV1_AsColor
             || brushMode == BrushTarget.UV2_AsColor || brushMode == BrushTarget.UV3_AsColor)
          {
+			if (brushValueMode == BrushValueMode.Blur)
+				brushColorMode = BrushColorMode.Blur;
             brushColorMode = (BrushColorMode)EditorGUILayout.EnumPopup("Blend Mode", (System.Enum)brushColorMode);
+			if( brushColorMode != BrushColorMode.Blur )
+				brushValueMode = BrushValueMode.Normal;
 
             if (brushColorMode == BrushColorMode.Overlay || brushColorMode == BrushColorMode.Normal)
             {
@@ -497,7 +501,14 @@ namespace JBooth.VertexPainterPro
          }
          else if (brushMode == BrushTarget.ValueR || brushMode == BrushTarget.ValueG || brushMode == BrushTarget.ValueB || brushMode == BrushTarget.ValueA)
          {
-            brushValue = (int)EditorGUILayout.Slider("Brush Value", (float)brushValue, 0.0f, 256.0f);
+			if( brushColorMode == BrushColorMode.Blur )
+				brushValueMode = BrushValueMode.Blur;
+			brushValueMode = (BrushValueMode)EditorGUILayout.EnumPopup("Blend Mode", (System.Enum)brushValueMode);
+			if (brushValueMode == BrushValueMode.Normal && brushColorMode == BrushColorMode.Blur)
+				brushColorMode = BrushColorMode.Normal;
+
+			if (brushValueMode == BrushValueMode.Normal)
+            	brushValue = (int)EditorGUILayout.Slider("Brush Value", (float)brushValue, 0.0f, 256.0f);
          }
          else
          {
