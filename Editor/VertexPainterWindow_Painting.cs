@@ -1025,7 +1025,7 @@ namespace JBooth.VertexPainterPro
 			}
 			return null;
 		}
-
+		
 		public object GetBrushValue()
 		{
 			if( tab == Tab.Custom )
@@ -1042,25 +1042,18 @@ namespace JBooth.VertexPainterPro
 			switch( brushMode )
 			{
 			case BrushTarget.Color:
-				return brushColor;
-			case BrushTarget.ValueR:
-				return brushValue / 255.0f;
-			case BrushTarget.ValueG:
-				return brushValue / 255.0f;
-			case BrushTarget.ValueB:
-				return brushValue / 255.0f;
-			case BrushTarget.ValueA:
-				return brushValue / 255.0f;
 			case BrushTarget.UV0_AsColor:
-				return brushColor;
 			case BrushTarget.UV1_AsColor:
-				return brushColor;
 			case BrushTarget.UV2_AsColor:
-				return brushColor;
 			case BrushTarget.UV3_AsColor:
-				return brushColor;
+				return brushInvert ? Color.white - brushColor : brushColor;
+			case BrushTarget.ValueR:
+			case BrushTarget.ValueG:
+			case BrushTarget.ValueB:
+			case BrushTarget.ValueA:
+				return brushInvert ? 1.0f - brushValue / 255.0f : brushValue / 255.0f;
 			default:
-				return floatBrushValue;
+				return brushInvert ? 1.0f - floatBrushValue : floatBrushValue;
 			}
 		}
 
@@ -1158,6 +1151,7 @@ namespace JBooth.VertexPainterPro
 		public float brushSize = 1;
 		public float brushFlow = 8;
 		public float brushFalloff = 1; // linear
+		public bool brushInvert = false;
 		public Color brushColor = Color.red;
 		public int brushValue = 255;
 		public float floatBrushValue = 1.0f;
@@ -2367,6 +2361,10 @@ namespace JBooth.VertexPainterPro
 					strokeDir.z *= Event.current.delta.magnitude;
 					oldMousePosition = point;
 				}
+			}
+			else if( tab == Tab.Paint )
+			{
+				brushInvert = Event.current.control;
 			}
 			else if( vertexMode == VertexMode.Adjust )
 			{
