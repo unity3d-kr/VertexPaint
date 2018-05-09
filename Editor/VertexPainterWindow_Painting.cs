@@ -1025,7 +1025,7 @@ namespace JBooth.VertexPainterPro
 			}
 			return null;
 		}
-		
+
 		public object GetBrushValue()
 		{
 			if( tab == Tab.Custom )
@@ -2216,6 +2216,15 @@ namespace JBooth.VertexPainterPro
 					brushFlow += adjustSpeed;
 					Repaint();
 				}
+			}
+
+			// palette
+			if( Event.current.type == EventType.KeyDown && Event.current.keyCode >= KeyCode.Alpha0 && Event.current.keyCode <= KeyCode.Alpha9 )
+			{
+				if( Event.current.keyCode == KeyCode.Alpha0 )
+					brushColor = swatches.colors[9];
+				else
+					brushColor = swatches.colors[Event.current.keyCode - KeyCode.Alpha1];
 			}
 		}
 
