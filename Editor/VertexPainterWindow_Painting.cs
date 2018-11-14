@@ -1025,7 +1025,7 @@ namespace JBooth.VertexPainterPro
 			}
 			return null;
 		}
-
+		
 		public object GetBrushValue()
 		{
 			if( tab == Tab.Custom )
@@ -1080,8 +1080,13 @@ namespace JBooth.VertexPainterPro
 
 		public enum FlowVisualization
 		{
-			Arrows = 0,
 			Water,
+			Color,
+			Arrow,
+			Arrow2,
+			Arrow3,
+			Arrow4,
+			Arrow5,
 		}
 
 		public enum BrushTarget
@@ -1162,7 +1167,7 @@ namespace JBooth.VertexPainterPro
 		public VertexMode vertexMode = VertexMode.Adjust;
 		public FlowTarget flowTarget = FlowTarget.ColorRG;
 		public FlowBrushType flowBrushType = FlowBrushType.Direction;
-		public FlowVisualization flowVisualization = FlowVisualization.Water;
+		public FlowVisualization flowVisualization = FlowVisualization.Arrow;
 		public bool flowRemap01 = true;
 		public bool pull = false;
 		public VertexContraint vertexContraint = VertexContraint.Normal;
@@ -1854,8 +1859,8 @@ namespace JBooth.VertexPainterPro
 				}
 
 				// Blur Mode
-				if( (brushMode == BrushTarget.Color && brushColorMode == BrushColorMode.Blur)
-					|| ((brushMode == BrushTarget.ValueR || brushMode == BrushTarget.ValueG || brushMode == BrushTarget.ValueB || brushMode == BrushTarget.ValueA) && brushValueMode == BrushValueMode.Blur) )
+				if( (this.brushMode == BrushTarget.Color && this.brushColorMode == BrushColorMode.Blur)
+					|| ((this.brushMode == BrushTarget.ValueR || this.brushMode == BrushTarget.ValueG || this.brushMode == BrushTarget.ValueB || this.brushMode == BrushTarget.ValueA) && this.brushValueMode == BrushValueMode.Blur) )
 				{
 					value = MeanValue( j, indices, strs);
 				}
@@ -1882,7 +1887,7 @@ namespace JBooth.VertexPainterPro
 			float weight = 0;
 			Color c = new Color( 0, 0, 0, 0 );
 			float v = 0;
-			if( brushMode == BrushTarget.Color )
+			if( this.brushMode == BrushTarget.Color )
 			{
 				for( int i = 0; i < indices.Count; ++i )
 				{
@@ -1890,7 +1895,7 @@ namespace JBooth.VertexPainterPro
 					weight += strs[i];
 				}
 			}
-			else if( brushMode == BrushTarget.ValueR )
+			else if( this.brushMode == BrushTarget.ValueR )
 			{
 				for( int i = 0; i < indices.Count; ++i )
 				{
@@ -1898,7 +1903,7 @@ namespace JBooth.VertexPainterPro
 					weight += strs[i];
 				}
 			}
-			else if( brushMode == BrushTarget.ValueG )
+			else if( this.brushMode == BrushTarget.ValueG )
 			{
 				for( int i = 0; i < indices.Count; ++i )
 				{
@@ -1906,7 +1911,7 @@ namespace JBooth.VertexPainterPro
 					weight += strs[i];
 				}
 			}
-			else if( brushMode == BrushTarget.ValueB )
+			else if( this.brushMode == BrushTarget.ValueB )
 			{
 				for( int i = 0; i < indices.Count; ++i )
 				{
@@ -1914,7 +1919,7 @@ namespace JBooth.VertexPainterPro
 					weight += strs[i];
 				}
 			}
-			else if( brushMode == BrushTarget.ValueA )
+			else if( this.brushMode == BrushTarget.ValueA )
 			{
 				for( int i = 0; i < indices.Count; ++i )
 				{
@@ -1923,7 +1928,7 @@ namespace JBooth.VertexPainterPro
 				}
 			}
 
-			if( brushMode == BrushTarget.Color )
+			if( this.brushMode == BrushTarget.Color )
 				return (object)(c / weight);
 			else
 				return (object)(v / weight);
@@ -2217,15 +2222,6 @@ namespace JBooth.VertexPainterPro
 					Repaint();
 				}
 			}
-
-			// palette
-			if( Event.current.type == EventType.KeyDown && Event.current.keyCode >= KeyCode.Alpha0 && Event.current.keyCode <= KeyCode.Alpha9 )
-			{
-				if( Event.current.keyCode == KeyCode.Alpha0 )
-					brushColor = swatches.colors[9];
-				else
-					brushColor = swatches.colors[Event.current.keyCode - KeyCode.Alpha1];
-			}
 		}
 
 		void OnSceneGUI( SceneView sceneView )
@@ -2385,6 +2381,7 @@ namespace JBooth.VertexPainterPro
 				brushSize += Event.current.delta.x * (float)deltaTime * 6.0f;
 				brushFalloff -= Event.current.delta.y * (float)deltaTime * 48.0f;
 			}
+			
 
 			if( Event.current.rawType == EventType.MouseUp )
 			{

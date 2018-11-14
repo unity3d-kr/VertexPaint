@@ -1,4 +1,6 @@
-﻿// I highly recomend you look in the example shaders rather than this one if your wondering how to best use
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// I highly recomend you look in the example shaders rather than this one if your wondering how to best use
 // these tools. This shader is designed to not use textures and show visual information, which makes it rather
 // expensive since it has lots of procedural functions and a ton of display options in a single shader.
 
@@ -152,7 +154,7 @@ Shader "Hidden/VertexPainterPro_Preview"
          {
             v2f o;
             o.uv = v.uv0.xy;
-            o.vertex = mul(UNITY_MATRIX_MVP, v.vertex); 
+            o.vertex = UnityObjectToClipPos(v.vertex); 
             if (_tab > 1.9 && _tab < 2.1)
             {
                if (_flowTarget < 1)
@@ -346,13 +348,18 @@ Shader "Hidden/VertexPainterPro_Preview"
             {
                if (_flowVisualization < 0.1)
                {
-                  float2 flow = i.flow * 2 - 1;
-                  float arrow_dist = Arrow(i.uv*500, flow * 0.4);
-                  return lerp(fixed4(0,0,0,1), fixed4(i.uv, 0, 1), saturate(arrow_dist));
+                  return FlowWater(i.uv, i.flow);
+               }
+               else if (_flowVisualization < 1.1)
+               {
+                  return fixed4(i.flow.xy, 1, 1);
                }
                else
                {
-                  return FlowWater(i.uv, i.flow);
+                  float arrow_scale = (_flowVisualization - 1) * 500;
+                  float2 flow = i.flow * 2 - 1;
+                  float arrow_dist = Arrow(i.uv*arrow_scale, flow * 0.4);
+                  return lerp(fixed4(0,0,0,1), fixed4(i.uv, 0, 1), saturate(arrow_dist));
                }
             }
          
