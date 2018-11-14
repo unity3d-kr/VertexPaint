@@ -45,6 +45,7 @@ namespace JBooth.VertexPainterPro
 			// Exporter
 			GUILayout.Space(10);
 			brushMode = (VertexPainterWindow.BrushTarget)EditorGUILayout.EnumPopup( "Export From", brushMode);
+            padMode = EditorGUILayout.Toggle("Outline Padding", padMode);
 			EditorGUILayout.BeginHorizontal();
 			exportTexWidth = (TextureSize)EditorGUILayout.EnumPopup( "Width", exportTexWidth );
 			exportTexHeight = (TextureSize)EditorGUILayout.EnumPopup( "Height", exportTexHeight );
@@ -100,6 +101,8 @@ namespace JBooth.VertexPainterPro
 		Vector2 worldSpaceUpper = new Vector2( 1, 1 );
 
 		VertexPainterWindow.BrushTarget brushMode = VertexPainterWindow.BrushTarget.Color;
+        bool padMode = false;
+
 		private enum TextureSize
 		{
 			_16 = 16,
@@ -315,13 +318,15 @@ namespace JBooth.VertexPainterPro
 			var CamObj = new GameObject("BakeTexture Camera");
 			CamObj.transform.position = new Vector3( 0, 0, -1 );
 			var camera = CamObj.AddComponent<Camera>();
-			camera.clearFlags = CameraClearFlags.Nothing;
+			camera.clearFlags = CameraClearFlags.Color;
+            camera.backgroundColor = Color.black;
 			camera.orthographic = true;
 			camera.orthographicSize = 1;
 			camera.cullingMask = 1<<7;
 			camera.targetTexture = rt;
+            camera.allowMSAA = false;
 
-			foreach( PaintJob job in jobs )
+            foreach ( PaintJob job in jobs )
 			{
 				Mesh source = job.meshFilter.sharedMesh;
 				Mesh mesh = Object.Instantiate( source );
@@ -355,12 +360,18 @@ namespace JBooth.VertexPainterPro
 
 				mesh.SetVertices( srcVertices );
 				mesh.SetColors( srcColors );
-				Graphics.DrawMesh( mesh, Matrix4x4.identity, m, 7);
+                Graphics.DrawMesh( mesh, Matrix4x4.identity, m, 7);
 				camera.Render();
 			}
 
 			tex.ReadPixels( new Rect( 0, 0, w, h ), 0, 0 );
 			tex.Apply();
+
+            if (padMode)
+            {
+                var pad = new TexturePadding(tex);
+                pad.Padding((w + h) / 50);
+            }
 
 			RenderTexture.active = null;
 			camera.targetTexture = null;
@@ -369,6 +380,114 @@ namespace JBooth.VertexPainterPro
 			RenderTexture.ReleaseTemporary( rt );
 			return tex;
 		}
+
+        class TexturePadding
+        {
+            public Texture2D texture;
+            Color32[] newcolors;
+            Color32[] colors;
+            int w, h;
+            public TexturePadding(Texture2D tex)
+            {
+                texture = tex;
+                w = tex.width;
+                h = tex.height;
+
+                colors = tex.GetPixels32();
+                newcolors = new Color32[colors.Length];
+            }
+
+            static int Clamp(int x, int width)
+            {
+                return x < 0 ? 0 : (x < width - 1 ? x : width - 1);
+            }
+            Color32 GetColor(int x, int y)
+            {
+                x = Clamp(x, w);
+                y = Clamp(y, h);
+                return colors[x + y * w];
+            }
+            void SetColor(int x, int y, Color32 c)
+            {
+                newcolors[x + y * w] = c;
+            }
+
+            static bool IsBlack(Color32 c)
+            {
+                return c.r == 0 && c.g == 0 && c.b == 0;
+            }
+            bool IsBlack(int x, int y)
+            {
+                return IsBlack(GetColor(x, y));
+            }
+            Color32 GetNeighborColor(int x, int y)
+            {
+                Color output = Color.black;
+                float count = 0;
+                Color32 c;
+
+                c = GetColor(x + 1, y - 1);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = GetColor(x + 1, y);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = GetColor(x + 1, y + 1);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = GetColor(x, y - 1);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = GetColor(x, y + 1);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = GetColor(x - 1, y - 1);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = GetColor(x - 1, y);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = GetColor(x - 1, y + 1);
+                if (!IsBlack(c))
+                {   output += c; count += 1; }
+
+                c = output / count;
+                c.a = 255;
+                return c;
+            }
+
+            void PaddingOnce()
+            {
+                for (int j = 0; j < texture.height; j++)
+                {
+                    for (int i = 0; i < texture.width; i++)
+                    {
+                        Color32 c = GetColor(i, j);
+                        if (IsBlack(c))
+                            c = GetNeighborColor(i, j);
+                        SetColor(i, j, c);
+                    }
+                }
+            }
+            public void Padding(int count)
+            {
+                for (int pad = 0; pad < count; pad++)
+                {
+                    PaddingOnce();
+                    newcolors.CopyTo(colors, 0);
+                }
+
+                texture.SetPixels32(colors);
+                texture.Apply();
+            }
+        }
 
 		private Texture2D SaveTexture( Texture2D texture )
 		{
