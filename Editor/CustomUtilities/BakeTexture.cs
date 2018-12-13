@@ -360,6 +360,10 @@ namespace JBooth.VertexPainterPro
 
 				mesh.SetVertices( srcVertices );
 				mesh.SetColors( srcColors );
+				var bound = mesh.bounds;
+				bound.center = Vector3.zero;
+				bound.size = Vector3.one;
+				mesh.bounds = bound;
                 Graphics.DrawMesh( mesh, Matrix4x4.identity, m, 7);
 				camera.Render();
 			}
